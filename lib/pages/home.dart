@@ -7,6 +7,7 @@ import 'package:camera/camera.dart';
 import 'loginPage.dart';
 import 'package:http/http.dart' as http;
 import 'package:http_parser/http_parser.dart';
+import 'url.dart';
 
 class HomePage extends StatefulWidget {
   @override
@@ -57,6 +58,15 @@ class HomePageState extends State<HomePage> {
 
   Future<void> _markAttendance() async {
     final cameras = await availableCameras();
+
+    if (cameras.isEmpty) {
+      print('No cameras available on the device.');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('No cameras available.')),
+      );
+      return; // Exit the method if no cameras are available
+    }
+
     final firstCamera = cameras.first;
 
     final imagePath = await Navigator.push(
@@ -74,13 +84,13 @@ class HomePageState extends State<HomePage> {
       try {
         final request = http.MultipartRequest(
           'POST',
-          Uri.parse('http://10.0.2.2:8001/app_attendance'),
+          Uri.parse(facialCheckUrl),
         );
 
         request.files.add(await http.MultipartFile.fromPath(
-          'file', // This matches the backend's expected field name
+          'file',
           imagePath,
-          contentType: MediaType('image', 'jpeg'), // Specify content type
+          contentType: MediaType('image', 'jpeg'),
         ));
 
         final response = await request.send();
@@ -96,36 +106,6 @@ class HomePageState extends State<HomePage> {
             SnackBar(content: Text('Failed to mark attendance')),
           );
         }
-
-        try {
-          // Request location permissions if not already granted.
-          LocationPermission permission = await Geolocator.requestPermission();
-
-          if (permission == LocationPermission.denied) {
-            print('Location permission denied');
-            return;
-          } else if (permission == LocationPermission.deniedForever) {
-            print('Location permission permanently denied');
-            return;
-          }
-
-          // Retrieve the current position.
-          Position position = await Geolocator.getCurrentPosition(
-              desiredAccuracy: LocationAccuracy.high);
-
-          print('User Location: Latitude: ${position.latitude}, Longitude: ${position.longitude}');
-
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Location captured successfully!')),
-          );
-        } catch (e) {
-          print('Error retrieving location: $e');
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Failed to capture location.')),
-          );
-        }
-
-
       } catch (e) {
         print('Error uploading image: $e');
         ScaffoldMessenger.of(context).showSnackBar(
@@ -134,7 +114,6 @@ class HomePageState extends State<HomePage> {
       }
     }
   }
-
 
   @override
   Widget build(BuildContext context) {
@@ -238,39 +217,53 @@ class TakePictureScreenState extends State<TakePictureScreen> {
   }
 
   Future<void> _initializeCamera() async {
-    // Retrieve all available cameras.
-    cameras = await availableCameras();
-    selectedCamera = widget.camera;
+    try {
+      // Retrieve all available cameras.
+      cameras = await availableCameras();
+      selectedCamera = widget.camera;
 
-    _controller = CameraController(
-      selectedCamera!,
-      ResolutionPreset.medium,
-    );
+      _controller = CameraController(
+        selectedCamera!,
+        ResolutionPreset.medium,
+      );
 
-    _initializeControllerFuture = _controller.initialize();
-    setState(() {});
+      _initializeControllerFuture = _controller.initialize();
+      setState(() {});
+    } catch (e) {
+      print('Error initializing camera: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error initializing camera: $e')),
+      );
+    }
   }
 
   Future<void> _switchCamera() async {
-    // Find the next camera (toggle between front and back).
-    final newCamera = cameras.firstWhere(
-          (camera) => camera.lensDirection != selectedCamera?.lensDirection,
-    );
+    try {
+      // Find the next camera (toggle between front and back).
+      final newCamera = cameras.firstWhere(
+            (camera) => camera.lensDirection != selectedCamera?.lensDirection,
+      );
 
-    setState(() {
-      selectedCamera = newCamera;
-    });
+      setState(() {
+        selectedCamera = newCamera;
+      });
 
-    // Reinitialize the controller with the new camera.
-    await _controller.dispose();
+      // Dispose the current controller before switching cameras.
+      await _controller.dispose();
 
-    _controller = CameraController(
-      selectedCamera!,
-      ResolutionPreset.medium,
-    );
+      _controller = CameraController(
+        selectedCamera!,
+        ResolutionPreset.medium,
+      );
 
-    _initializeControllerFuture = _controller.initialize();
-    setState(() {});
+      _initializeControllerFuture = _controller.initialize();
+      setState(() {});
+    } catch (e) {
+      print('Error switching camera: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error switching camera: $e')),
+      );
+    }
   }
 
   @override

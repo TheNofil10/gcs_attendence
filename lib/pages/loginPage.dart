@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'home.dart';
+import 'url.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -16,7 +17,6 @@ class _LoginPageState extends State<LoginPage> {
   final TextEditingController _passwordController = TextEditingController();
 
   Future<void> _login() async {
-    final String url = 'http://10.0.2.2:8000/api/token/';
 
     // Prepare the body
     final Map<String, String> requestBody = {
@@ -26,10 +26,22 @@ class _LoginPageState extends State<LoginPage> {
 
     try {
       var response = await http.post(
-        Uri.parse(url),
+        Uri.parse(loginTokenUrl),
         headers: {'Content-Type': 'application/json'},
         body: json.encode(requestBody),
       );
+
+      if (response.statusCode == 307) {
+        // Follow the redirect URL from the Location header
+        final redirectUrl = response.headers['location'];
+        if (redirectUrl != null) {
+          response = await http.post(
+            Uri.parse(redirectUrl),
+            headers: {'Content-Type': 'application/json'},
+            body: json.encode(requestBody),
+          );
+        }
+      }
 
       if (response.statusCode == 200) {
         // Parse tokens from the response
@@ -43,7 +55,7 @@ class _LoginPageState extends State<LoginPage> {
 
         // Fetch user details using the access token
         final userDetailsResponse = await http.get(
-          Uri.parse('http://10.0.2.2:8000/api/employees/$userId/'),
+          Uri.parse(userDetailsUrl + "$userId/"),
           headers: {'Authorization': 'Bearer $accessToken'},
         );
 
