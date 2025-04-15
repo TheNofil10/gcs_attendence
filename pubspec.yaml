@@ -41,8 +41,7 @@ dependencies:
   auto_size_text:
   flutter_launcher_icons:
   fluttertoast: ^8.2.1
-  dependencies:
-    intl: ^0.18.0
+  intl: ^0.18.0
 
 
 flutter_icons:

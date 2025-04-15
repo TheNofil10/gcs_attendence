@@ -1,9 +1,10 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:gcs_attendence/main.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'home.dart';
-import 'url.dart';
+import '../components/url.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -15,8 +16,13 @@ class LoginPage extends StatefulWidget {
 class _LoginPageState extends State<LoginPage> {
   final TextEditingController _usernameController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
+  bool _isPasswordVisible = false; // Variable to toggle password visibility
+  bool _isLoading = false; // New variable to track loading state
 
   Future<void> _login() async {
+    setState(() {
+      _isLoading = true; // Set loading to true when login starts
+    });
 
     // Prepare the body
     final Map<String, String> requestBody = {
@@ -72,32 +78,37 @@ class _LoginPageState extends State<LoginPage> {
           prefs.setString('current_user', json.encode(userDetails));
 
           // Navigate to the home page
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Login successful!')),
-          );
+          // ScaffoldMessenger.of(context).showSnackBar(
+          //   const SnackBar(content: Text('Login successful!')),
+          // );
           Navigator.pushReplacement(
             context,
             MaterialPageRoute(
-              builder: (context) => HomePage(),
+              builder: (context) => MainPage(),
             ),
           );
         } else {
           // Handle error fetching user details
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Error fetching user details: ${userDetailsResponse.statusCode}')),
-          );
+          // ScaffoldMessenger.of(context).showSnackBar(
+          //   SnackBar(content: Text('Error fetching user details: ${userDetailsResponse.statusCode}')),
+          // );
         }
       } else {
         // Handle login failure
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Login failed: ${response.statusCode}')),
-        );
+        // ScaffoldMessenger.of(context).showSnackBar(
+        //   SnackBar(content: Text('Login failed: ${response.statusCode}')),
+        // );
       }
     } catch (e) {
       // Handle exceptions
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('An error occurred: $e')),
-      );
+      // ScaffoldMessenger.of(context).showSnackBar(
+      //   SnackBar(content: Text('An error occurred: $e')),
+      // );
+    } finally {
+      setState(() {
+        _isLoading =
+            false; // Reset loading to false after the request completes
+      });
     }
   }
 
@@ -174,6 +185,7 @@ class _LoginPageState extends State<LoginPage> {
                     TextField(
                       controller: _passwordController,
                       style: const TextStyle(color: Color(0xFF92363E)),
+                      obscureText: !_isPasswordVisible, // Toggle the visibility
                       decoration: InputDecoration(
                         labelText: 'Password',
                         labelStyle: const TextStyle(color: Color(0xFF92363E)),
@@ -184,16 +196,39 @@ class _LoginPageState extends State<LoginPage> {
                         focusedBorder: const OutlineInputBorder(
                           borderSide: BorderSide(color: Color(0xFF92363E)),
                         ),
+                        suffixIcon: IconButton(
+                          icon: Icon(
+                            _isPasswordVisible
+                                ? Icons.visibility
+                                : Icons.visibility_off,
+                            color: const Color(0xFF92363E),
+                          ),
+                          onPressed: () {
+                            setState(() {
+                              _isPasswordVisible =
+                                  !_isPasswordVisible; // Toggle password visibility
+                            });
+                          },
+                        ),
                       ),
-                      obscureText: true,
                     ),
                     const SizedBox(height: 24),
                     ElevatedButton(
-                      onPressed: _login,
-                      child: const Text('Login'),
+                      onPressed: _isLoading
+                          ? null
+                          : _login, // Disable button while loading
+                      child: _isLoading
+                          ? const CircularProgressIndicator(
+                              color: Colors.white,
+                            )
+                          : const Text('Login'),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFF92363E),
                         foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 30, vertical: 15),
+                        textStyle: const TextStyle(
+                            fontSize: 16, fontWeight: FontWeight.w500),
                       ),
                     ),
                   ],
