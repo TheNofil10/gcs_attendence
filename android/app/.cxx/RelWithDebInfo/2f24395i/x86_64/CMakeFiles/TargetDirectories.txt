@@ -1,0 +1,2 @@
+/Users/nofil/Desktop/Nofil/Projects/gcs_attendence/android/app/.cxx/RelWithDebInfo/2f24395i/x86_64/CMakeFiles/edit_cache.dir
+/Users/nofil/Desktop/Nofil/Projects/gcs_attendence/android/app/.cxx/RelWithDebInfo/2f24395i/x86_64/CMakeFiles/rebuild_cache.dir

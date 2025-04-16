@@ -5,6 +5,7 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'home.dart';
 import '../components/url.dart';
+import '../components/alertDialog.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -78,32 +79,92 @@ class _LoginPageState extends State<LoginPage> {
           prefs.setString('current_user', json.encode(userDetails));
 
           // Navigate to the home page
-          // ScaffoldMessenger.of(context).showSnackBar(
-          //   const SnackBar(content: Text('Login successful!')),
-          // );
           Navigator.pushReplacement(
             context,
             MaterialPageRoute(
               builder: (context) => MainPage(),
             ),
           );
+
+          // Show success message
+          MessageSnackbar.show(
+            context,
+            type: MessageType.success,
+            message: 'Login successful!',
+          );
+        } else if (userDetailsResponse.statusCode == 401) {
+          // Unauthorized error
+          MessageSnackbar.show(
+            context,
+            type: MessageType.error,
+            message: 'Session expired. Please log in again.',
+          );
+        } else if (userDetailsResponse.statusCode == 404) {
+          // User not found
+          MessageSnackbar.show(
+            context,
+            type: MessageType.error,
+            message: 'User details not found. Please contact support.',
+          );
         } else {
-          // Handle error fetching user details
-          // ScaffoldMessenger.of(context).showSnackBar(
-          //   SnackBar(content: Text('Error fetching user details: ${userDetailsResponse.statusCode}')),
-          // );
+          // Other errors
+          MessageSnackbar.show(
+            context,
+            type: MessageType.error,
+            message:
+                'Error fetching user details! Status: ${userDetailsResponse.statusCode}',
+          );
         }
+      } else if (response.statusCode == 400) {
+        // Bad Request
+        MessageSnackbar.show(
+          context,
+          type: MessageType.error,
+          message: 'Invalid request. Please check your input.',
+        );
+      } else if (response.statusCode == 401) {
+        // Unauthorized
+        MessageSnackbar.show(
+          context,
+          type: MessageType.error,
+          message: 'Invalid credentials. Please try again.',
+        );
+      } else if (response.statusCode == 403) {
+        // Forbidden
+        MessageSnackbar.show(
+          context,
+          type: MessageType.error,
+          message: 'You do not have permission to log in. Contact support.',
+        );
+      } else if (response.statusCode == 404) {
+        // Not Found
+        MessageSnackbar.show(
+          context,
+          type: MessageType.error,
+          message: 'Server not found. Please try again later.',
+        );
+      } else if (response.statusCode == 500) {
+        // Internal Server Error
+        MessageSnackbar.show(
+          context,
+          type: MessageType.error,
+          message: 'Server error. Please try again later.',
+        );
       } else {
-        // Handle login failure
-        // ScaffoldMessenger.of(context).showSnackBar(
-        //   SnackBar(content: Text('Login failed: ${response.statusCode}')),
-        // );
+        // Handle unknown errors
+        MessageSnackbar.show(
+          context,
+          type: MessageType.error,
+          message: 'Login failed: ${response.statusCode}',
+        );
       }
     } catch (e) {
       // Handle exceptions
-      // ScaffoldMessenger.of(context).showSnackBar(
-      //   SnackBar(content: Text('An error occurred: $e')),
-      // );
+      MessageSnackbar.show(
+        context,
+        type: MessageType.error,
+        message: 'An error occurred: $e',
+      );
     } finally {
       setState(() {
         _isLoading =

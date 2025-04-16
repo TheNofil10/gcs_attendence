@@ -101,10 +101,12 @@ class _AttendancePageState extends State<AttendancePage> {
         });
       }
     } catch (e) {
-      setState(() {
-        errorMessage = "Error fetching attendance: $e";
-        isLoading = false;
-      });
+      if (mounted) {
+        setState(() {
+          errorMessage = "Error fetching attendance: $e";
+          isLoading = false;
+        });
+      }
     }
   }
 
