@@ -12,11 +12,14 @@ import 'dart:io';
 //
 //     : 'http://10.0.2.2:8001/';  // For Android emulator
 
-// final String crmBaseUrl = 'http://192.168.62.25:8000/'; //port 8000
-// final String facialBaseUrl = 'http://192.168.62.25:8001/'; //port 8001
+// final String crmBaseUrl = 'http://127.0.0.1:8000/'; //port 8000
+// final String facialBaseUrl = 'http://127.0.0.1:8000/'; //port 8001
 
-final String crmBaseUrl = 'http://110.39.151.34:8002/'; //port 8000
-final String facialBaseUrl = 'http://110.39.151.34:8002/'; //port 8001
+final String crmBaseUrl = 'http://10.10.10.29:8002/'; //port 8000
+final String facialBaseUrl = 'http://10.10.10.29:8002/'; //port 8001
+
+// final String crmBaseUrl = 'http://110.39.151.34:8002/'; //port 8000
+// final String facialBaseUrl = 'http://110.39.151.34:8002/'; //port 8001
 
 String facialCheckUrl = facialBaseUrl + "proxy_attendance/";
 

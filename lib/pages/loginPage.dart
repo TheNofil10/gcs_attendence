@@ -51,6 +51,7 @@ class _LoginPageState extends State<LoginPage> {
       }
 
       if (response.statusCode == 200) {
+        print("Logged in successfully");
         // Parse tokens from the response
         final Map<String, dynamic> data = json.decode(response.body);
         String accessToken = data['access'];
@@ -58,9 +59,11 @@ class _LoginPageState extends State<LoginPage> {
 
         // Decode the access token to get user_id (optional step)
         final decodedToken = _decodeToken(accessToken);
-        final userId = decodedToken['user_id'];
+        print(decodedToken);
+        final userId = decodedToken['id'];
 
         // Fetch user details using the access token
+        print(userDetailsUrl + "$userId/");
         final userDetailsResponse = await http.get(
           Uri.parse(userDetailsUrl + "$userId/"),
           headers: {'Authorization': 'Bearer $accessToken'},

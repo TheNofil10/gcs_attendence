@@ -263,10 +263,7 @@ class _AttendancePageState extends State<AttendancePage> {
                                   borderRadius: BorderRadius.circular(
                                       12.0), // Rounded edges
                                 ),
-                                child: currentUser?['is_manager'] ||
-                                        currentUser?['is_hr_manager'] ||
-                                        currentUser?['is_superuser']
-                                    ? ListTile(
+                                child: ListTile(
                                         shape: RoundedRectangleBorder(
                                           borderRadius: BorderRadius.circular(
                                               12.0), // Match the rounding
@@ -304,44 +301,6 @@ class _AttendancePageState extends State<AttendancePage> {
                                           ],
                                         ),
                                       )
-                                    : ListTile(
-                                        shape: RoundedRectangleBorder(
-                                          borderRadius: BorderRadius.circular(
-                                              12.0), // Match the rounding
-                                        ),
-                                        title: Text(
-                                          Helper.formatDate(attendance['date']),
-                                          style: const TextStyle(
-                                              fontWeight: FontWeight.bold),
-                                        ),
-                                        subtitle: Text(
-                                          status,
-                                          style:
-                                              const TextStyle(fontSize: 14.0),
-                                        ),
-                                        trailing: Column(
-                                          children: [
-                                            Text(
-                                              Helper.getDayOfWeek(
-                                                  Helper.formatDate(
-                                                      attendance['date'])),
-                                              style: const TextStyle(
-                                                  fontSize: 12.0,
-                                                  fontWeight: FontWeight.w800),
-                                            ),
-                                            Text(
-                                              'IN: ${Helper.formatTime(attendance['time_in'])}',
-                                              style: const TextStyle(
-                                                  fontSize: 12.0),
-                                            ),
-                                            Text(
-                                              'OUT: ${Helper.formatTime(attendance['time_out'])}',
-                                              style: const TextStyle(
-                                                  fontSize: 12.0),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
                               ),
                             );
                           },

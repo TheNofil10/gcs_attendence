@@ -84,7 +84,7 @@ class HomePageState extends State<HomePage> {
         },
       );
 
-      if (response.statusCode == 200) {
+      if (response.statusCode == 200 || response.statusCode == 201) {
         Helper.debugPrint(1, "Attendance fetched successfully");
 
         if (!mounted) return; // Check if the widget is still active
@@ -157,7 +157,7 @@ class HomePageState extends State<HomePage> {
         }),
       );
 
-      if (response.statusCode == 200) {
+      if (response.statusCode == 200 || response.statusCode == 201) {
         Helper.debugPrint(DEBUG, "got access token");
         final responseData = json.decode(response.body);
 
@@ -210,11 +210,11 @@ class HomePageState extends State<HomePage> {
         permission == LocationPermission.deniedForever) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-            content:
-                Text('Location permission is required to mark attendance.')),
+            content: Text('Location permission is required to mark attendance.')),
       );
       return;
     }
+
     Position position;
     try {
       position = await Geolocator.getCurrentPosition(
@@ -226,6 +226,7 @@ class HomePageState extends State<HomePage> {
       );
       return;
     }
+
     final cameras = await availableCameras();
     if (cameras.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -233,6 +234,7 @@ class HomePageState extends State<HomePage> {
       );
       return;
     }
+
     final firstCamera = cameras.first;
     final imagePath = await Navigator.push(
       context,
@@ -240,37 +242,65 @@ class HomePageState extends State<HomePage> {
         builder: (context) => TakePictureScreen(camera: firstCamera),
       ),
     );
+
     if (imagePath != null) {
       setState(() {
         _imageFile = File(imagePath);
         isProcessing = true;
       });
+
       try {
+        // ✅ Load token from SharedPreferences
+        final prefs = await SharedPreferences.getInstance();
+        String? token = prefs.getString('access_token');
+
+        if (token == null) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('No access token found, please log in again.')),
+          );
+          await _logout();
+          return;
+        }
+
         final request = http.MultipartRequest(
           'POST',
           Uri.parse(facialCheckUrl),
         );
+
+        // Attach the file
         request.files.add(await http.MultipartFile.fromPath(
           'file',
           imagePath,
           contentType: MediaType('image', 'jpeg'),
         ));
-        print(currentUser?['id']);
+
+        // Add fields
         request.fields['x'] = position.latitude.toString();
         request.fields['y'] = position.longitude.toString();
         request.fields['log_type'] = logType;
         request.fields['employeeid'] = currentUser!['id'].toString();
-        print(request.fields);
+
+        // ✅ Add headers (fix 422 error)
+        request.headers.addAll({
+          "Authorization": "Bearer $token",
+          "Accept": "application/json",
+        });
+
+        print("Sending request with headers: ${request.headers}");
+        print("Request fields: ${request.fields}");
+
         final response = await request.send();
-        if (response.statusCode == 200) {
-          final responseData = await response.stream.bytesToString();
+        final respStr = await response.stream.bytesToString();
+        print("Response body: $respStr");
+
+        if (response.statusCode == 200 || response.statusCode == 201) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Attendance marked: $responseData')),
+            SnackBar(content: Text('Attendance marked: $respStr')),
           );
         } else {
-          print('Failed to upload image: ${response.reasonPhrase}');
+          print('Failed to upload image. Status: ${response.statusCode}');
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Failed to mark attendance')),
+            SnackBar(content: Text('Failed: ${response.statusCode}, $respStr')),
           );
         }
       } catch (e) {
@@ -508,7 +538,7 @@ class TakePictureScreen extends StatefulWidget {
 
 class TakePictureScreenState extends State<TakePictureScreen> {
   late CameraController _controller;
-  late Future<void> _initializeControllerFuture;
+  late Future<void> _initializeControllerFuture = Future.value();
 
   List<CameraDescription> cameras = [];
   CameraDescription? selectedCamera;
@@ -608,6 +638,7 @@ class TakePictureScreenState extends State<TakePictureScreen> {
                   width: 80,
                   height: 80,
                   child: FloatingActionButton(
+                    heroTag: null,
                     onPressed: () async {
                       try {
                         await _initializeControllerFuture;
@@ -629,6 +660,7 @@ class TakePictureScreenState extends State<TakePictureScreen> {
                   width: 80,
                   height: 80,
                   child: FloatingActionButton(
+                    heroTag: null,
                     onPressed: _switchCamera,
                     child: const Icon(Icons.flip_camera_ios, size: 32),
                   ),

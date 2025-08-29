@@ -8,6 +8,7 @@ enum MessageType {
 class MessageSnackbar {
   static void show(BuildContext context,
       {required MessageType type, required String message}) {
+    print(message);
     final snackBar = SnackBar(
       content: Text(
         message,
